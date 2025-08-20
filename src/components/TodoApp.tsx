@@ -353,7 +353,7 @@ export default function TodoApp() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 flex items-center justify-center">
+      <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <div className="relative">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mx-auto"></div>
@@ -366,7 +366,7 @@ export default function TodoApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+    <div className="bg-gradient-to-br from-blue-50 via-white to-orange-50 min-h-full">
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-orange-500 text-white">
         <div className="absolute inset-0 bg-black opacity-10"></div>

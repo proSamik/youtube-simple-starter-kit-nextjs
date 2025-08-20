@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { db } from '@/src/lib/db';
 import { todos } from '@/src/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 /**
- * GET /api/todos/[id] - Retrieve a specific todo by ID
+ * GET /api/todos/[id] - Retrieve a specific todo by ID for the authenticated user
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { id: idParam } = await params;
     const id = parseInt(idParam);
     
@@ -21,7 +31,10 @@ export async function GET(
       );
     }
 
-    const todo = await db.select().from(todos).where(eq(todos.id, id));
+    const todo = await db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.id, id), eq(todos.userId, userId)));
     
     if (todo.length === 0) {
       return NextResponse.json(
@@ -41,7 +54,7 @@ export async function GET(
 }
 
 /**
- * PUT /api/todos/[id] - Update a specific todo
+ * PUT /api/todos/[id] - Update a specific todo for the authenticated user
  * Body: { title?: string, description?: string, completed?: boolean, priority?: string }
  */
 export async function PUT(
@@ -49,6 +62,15 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { id: idParam } = await params;
     const id = parseInt(idParam);
     
@@ -83,7 +105,7 @@ export async function PUT(
     const updatedTodo = await db
       .update(todos)
       .set(updateData)
-      .where(eq(todos.id, id))
+      .where(and(eq(todos.id, id), eq(todos.userId, userId)))
       .returning();
 
     if (updatedTodo.length === 0) {
@@ -104,13 +126,22 @@ export async function PUT(
 }
 
 /**
- * DELETE /api/todos/[id] - Delete a specific todo
+ * DELETE /api/todos/[id] - Delete a specific todo for the authenticated user
  */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { id: idParam } = await params;
     const id = parseInt(idParam);
     
@@ -123,7 +154,7 @@ export async function DELETE(
 
     const deletedTodo = await db
       .delete(todos)
-      .where(eq(todos.id, id))
+      .where(and(eq(todos.id, id), eq(todos.userId, userId)))
       .returning();
 
     if (deletedTodo.length === 0) {
