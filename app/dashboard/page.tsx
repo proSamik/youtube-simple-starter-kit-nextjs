@@ -2,6 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { AuthenticatedLayout } from '@/src/components/AuthenticatedLayout';
+import { SubscriptionGate } from '@/src/components/SubscriptionGate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckSquare, Clock, AlertCircle, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -39,7 +40,8 @@ export default function DashboardPage() {
 
   return (
     <AuthenticatedLayout>
-      <div className="p-8">
+      <SubscriptionGate>
+        <div className="p-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Welcome Section */}
           <div>
@@ -158,7 +160,8 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
+        </div>
+      </SubscriptionGate>
     </AuthenticatedLayout>
   );
 }

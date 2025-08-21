@@ -4,6 +4,33 @@ import { db } from '@/src/lib/db';
 import { todos } from '@/src/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
+// Helper function to check subscription
+async function checkSubscription() {
+  const { userId, has } = await auth();
+  
+  if (!userId) {
+    return { 
+      error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+      userId: null 
+    };
+  }
+
+  const hasPro = has({ plan: 'pro' });
+  const hasPlus = has({ plan: 'plus' });
+  
+  if (!hasPro && !hasPlus) {
+    return { 
+      error: NextResponse.json(
+        { error: 'Subscription required. Please upgrade your plan to access todos.' }, 
+        { status: 403 }
+      ),
+      userId: null 
+    };
+  }
+
+  return { error: null, userId };
+}
+
 /**
  * GET /api/todos/[id] - Retrieve a specific todo by ID for the authenticated user
  */
@@ -12,14 +39,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { error, userId } = await checkSubscription();
+    if (error) return error;
 
     const { id: idParam } = await params;
     const id = parseInt(idParam);
@@ -62,14 +83,8 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { error, userId } = await checkSubscription();
+    if (error) return error;
 
     const { id: idParam } = await params;
     const id = parseInt(idParam);
@@ -133,14 +148,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const { error, userId } = await checkSubscription();
+    if (error) return error;
 
     const { id: idParam } = await params;
     const id = parseInt(idParam);

@@ -10,12 +10,23 @@ import { desc, eq } from 'drizzle-orm';
  */
 export async function GET() {
   try {
-    const { userId } = await auth();
+    const { userId, has } = await auth();
     
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Check if user has a subscription
+    const hasPro = has({ plan: 'pro' });
+    const hasPlus = has({ plan: 'plus' });
+    
+    if (!hasPro && !hasPlus) {
+      return NextResponse.json(
+        { error: 'Subscription required. Please upgrade your plan to access todos.' },
+        { status: 403 }
       );
     }
 
@@ -41,12 +52,23 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
+    const { userId, has } = await auth();
     
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Check if user has a subscription
+    const hasPro = has({ plan: 'pro' });
+    const hasPlus = has({ plan: 'plus' });
+    
+    if (!hasPro && !hasPlus) {
+      return NextResponse.json(
+        { error: 'Subscription required. Please upgrade your plan to access todos.' },
+        { status: 403 }
       );
     }
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import TodoApp from "@/src/components/TodoApp";
 import { AuthenticatedLayout } from '@/src/components/AuthenticatedLayout';
+import { SubscriptionGate } from '@/src/components/SubscriptionGate';
 
 export default function Home() {
   const { isSignedIn, isLoaded } = useUser();
@@ -33,7 +34,9 @@ export default function Home() {
 
   return (
     <AuthenticatedLayout>
-      <TodoApp />
+      <SubscriptionGate>
+        <TodoApp />
+      </SubscriptionGate>
     </AuthenticatedLayout>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useUser, UserButton } from '@clerk/nextjs';
+import { useSubscription } from '@/src/hooks/useSubscription';
 import { Button } from '@/components/ui/button';
 import { 
   ChevronLeft, 
@@ -9,7 +10,8 @@ import {
   Home, 
   User, 
   Settings,
-  CheckSquare
+  CheckSquare,
+  Crown
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -18,6 +20,7 @@ import { cn } from '@/lib/utils';
 export function AppSidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useUser();
+  const { isSubscribed, hasPro, hasPlus, isLoading } = useSubscription();
   const pathname = usePathname();
 
   const navigationItems = [
@@ -104,9 +107,24 @@ export function AppSidebar() {
           />
           {!isCollapsed && user && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user.fullName || user.emailAddresses[0]?.emailAddress}
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user.fullName || user.emailAddresses[0]?.emailAddress}
+                </p>
+                {!isLoading && isSubscribed && (
+                  <div className="flex items-center space-x-1">
+                    <Crown className="h-3 w-3 text-yellow-500" />
+                    <span className={cn(
+                      "text-xs font-semibold px-1.5 py-0.5 rounded",
+                      hasPlus 
+                        ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white" 
+                        : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white"
+                    )}>
+                      {hasPlus ? "PLUS" : "PRO"}
+                    </span>
+                  </div>
+                )}
+              </div>
               <p className="text-xs text-gray-500 truncate">
                 {user.emailAddresses[0]?.emailAddress}
               </p>
