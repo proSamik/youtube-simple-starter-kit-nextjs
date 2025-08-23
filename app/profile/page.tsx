@@ -1,8 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useSession, signOut } from '@/lib/auth-client';
+import { useSession, signOut, authClient } from '@/lib/auth-client';
 import { 
   User, 
   Mail, 
@@ -12,11 +14,16 @@ import {
   LogOut,
   Settings,
   Badge,
-  CheckCircle
+  CheckCircle,
+  CreditCard,
+  ExternalLink
 } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
+  const [customerState, setCustomerState] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const handleSignOut = async () => {
     await signOut({
@@ -28,9 +35,42 @@ export default function ProfilePage() {
     });
   };
 
-  if (!session) {
+  const handlePortal = async () => {
+    try {
+      await authClient.customer.portal();
+    } catch (error) {
+      console.error('Portal error:', error);
+    }
+  };
+
+  const fetchCustomerState = async () => {
+    try {
+      if (session) {
+        const { data } = await authClient.customer.state();
+        setCustomerState(data);
+      }
+    } catch (error) {
+      console.error('Error fetching customer state:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.push('/sign-in');
+    }
+  }, [session, isPending, router]);
+
+  useEffect(() => {
+    if (session) {
+      fetchCustomerState();
+    }
+  }, [session]);
+
+  if (isPending || loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-96">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-600 mx-auto"></div>
           <p className="mt-4 text-slate-600 font-medium">Loading profile...</p>
@@ -39,15 +79,39 @@ export default function ProfilePage() {
     );
   }
 
+  if (!session) {
+    return null;
+  }
+
+  const hasActiveSubscription = customerState?.activeSubscriptions?.length > 0 || false;
+  const currentSubscription = customerState?.activeSubscriptions?.[0]; // Get the first active subscription
+  
+  // Get product name - we'll need to match productId with our known products
+  const getProductName = (productId: string) => {
+    const productMap: Record<string, string> = {
+      [process.env.NEXT_PUBLIC_POLAR_MONTHLY_PRO_PRODUCT_ID!]: 'Monthly Pro',
+      [process.env.NEXT_PUBLIC_POLAR_MONTHLY_PLUS_PRODUCT_ID!]: 'Monthly Plus', 
+      [process.env.NEXT_PUBLIC_POLAR_YEARLY_PRO_PRODUCT_ID!]: 'Yearly Pro',
+      [process.env.NEXT_PUBLIC_POLAR_YEARLY_PLUS_PRODUCT_ID!]: 'Yearly Plus'
+    };
+    return productMap[productId] || 'Unknown Plan';
+  };
+  
+  const planName = currentSubscription ? getProductName(currentSubscription.productId) : 'No subscription';
+  
+  console.log('Profile - Has Active Subscription:', hasActiveSubscription);
+  console.log('Profile - Current Subscription:', currentSubscription);
+
   return (
-    <div className="p-8 space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-800">Profile Settings</h1>
-        <p className="text-slate-600 mt-2">
-          Manage your account information and preferences
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="p-8 space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800">Profile Settings</h1>
+          <p className="text-slate-600 mt-2">
+            Manage your account information and preferences
+          </p>
+        </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Card */}
@@ -132,33 +196,57 @@ export default function ProfilePage() {
         {/* Subscription & Actions */}
         <div className="space-y-6">
           {/* Subscription Card */}
-          <Card className="bg-gradient-to-r from-slate-600 to-slate-800 text-white border-0 shadow-lg">
+          <Card className={`border-0 shadow-lg ${
+            hasActiveSubscription 
+              ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white" 
+              : "bg-gradient-to-r from-slate-600 to-slate-800 text-white"
+          }`}>
             <CardHeader>
               <CardTitle className="text-lg font-semibold flex items-center">
                 <Crown className="w-5 h-5 mr-2 text-yellow-400" />
-                Premium Subscription
+                {hasActiveSubscription ? 'Premium Subscription' : 'Subscription'}
               </CardTitle>
-              <CardDescription className="text-slate-200">
-                Active subscription status
+              <CardDescription className={hasActiveSubscription ? "text-green-100" : "text-slate-200"}>
+                {hasActiveSubscription ? 'Active subscription status' : 'No active subscription'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-200">Status</span>
-                  <span className="bg-green-500 text-white px-2 py-1 rounded-full text-sm font-semibold">
-                    Active
+                  <span className={hasActiveSubscription ? "text-green-100" : "text-slate-200"}>Status</span>
+                  <span className={`px-2 py-1 rounded-full text-sm font-semibold ${
+                    hasActiveSubscription 
+                      ? "bg-green-500 text-white" 
+                      : "bg-red-500 text-white"
+                  }`}>
+                    {hasActiveSubscription ? 'Active' : 'No Subscription'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-200">Plan</span>
-                  <span className="text-white font-semibold">Premium Plus</span>
+                  <span className={hasActiveSubscription ? "text-green-100" : "text-slate-200"}>Plan</span>
+                  <span className="text-white font-semibold">{planName}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-200">Renewal</span>
-                  <span className="text-white font-semibold">Monthly</span>
-                </div>
+                {hasActiveSubscription && currentSubscription && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-green-100">Renewal</span>
+                    <span className="text-white font-semibold">
+                      {currentSubscription.recurringInterval === 'month' ? 'Monthly' : 'Yearly'}
+                    </span>
+                  </div>
+                )}
               </div>
+              
+              {hasActiveSubscription && (
+                <Button
+                  onClick={handlePortal}
+                  variant="outline"
+                  className="w-full mt-4 bg-white/20 border-white/30 text-white hover:bg-white/30"
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Manage Subscription
+                  <ExternalLink className="w-4 h-4 ml-2" />
+                </Button>
+              )}
             </CardContent>
           </Card>
 
@@ -269,6 +357,7 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

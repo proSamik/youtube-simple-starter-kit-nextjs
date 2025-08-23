@@ -52,9 +52,9 @@ export function Sidebar({ className }: SidebarProps) {
     },
     {
       name: 'Profile',
-      href: '/premium/profile',
+      href: '/profile',
       icon: User,
-      current: pathname === '/premium/profile',
+      current: pathname === '/profile',
     },
   ];
 
