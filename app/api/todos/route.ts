@@ -1,16 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/src/lib/db';
 import { todos } from '@/src/lib/db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
+import { auth } from '@/lib/auth';
 
 /**
- * GET /api/todos - Retrieve all todos
+ * GET /api/todos - Retrieve all todos for authenticated user
  * Returns todos sorted by creation date (newest first)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const allTodos = await db.select().from(todos).orderBy(desc(todos.createdAt));
-    return NextResponse.json(allTodos);
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const userTodos = await db
+      .select()
+      .from(todos)
+      .where(eq(todos.userId, session.user.id))
+      .orderBy(desc(todos.createdAt));
+
+    return NextResponse.json(userTodos);
   } catch (error) {
     console.error('Error fetching todos:', error);
     return NextResponse.json(
@@ -21,11 +38,22 @@ export async function GET() {
 }
 
 /**
- * POST /api/todos - Create a new todo
+ * POST /api/todos - Create a new todo for authenticated user
  * Body: { title: string, description?: string, priority?: 'low' | 'medium' | 'high' }
  */
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { title, description, priority = 'medium' } = body;
 
@@ -40,6 +68,7 @@ export async function POST(request: NextRequest) {
       title: title.trim(),
       description: description?.trim() || null,
       priority,
+      userId: session.user.id,
       completed: false,
     }).returning();
 
