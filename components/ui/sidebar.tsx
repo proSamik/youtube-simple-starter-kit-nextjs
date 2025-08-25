@@ -14,7 +14,8 @@ import {
   Menu, 
   X,
   Target,
-  Crown
+  Crown,
+  MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,6 +50,12 @@ export function Sidebar({ className }: SidebarProps) {
       href: '/premium/todos',
       icon: CheckSquare,
       current: pathname === '/premium/todos',
+    },
+    {
+      name: 'AI Chatbot',
+      href: '/premium/chatbot',
+      icon: MessageCircle,
+      current: pathname === '/premium/chatbot',
     },
     {
       name: 'Profile',
