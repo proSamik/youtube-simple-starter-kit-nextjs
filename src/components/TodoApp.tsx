@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit2, Trash2, CheckCircle2, Circle, Target, Zap, Calendar, Star } from 'lucide-react';
-import { Todo } from '@/src/lib/db/schema';
+import { Todo } from '@/lib/db/schema';
 
 /**
  * Priority badge component with beautiful gradient styling and icons

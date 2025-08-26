@@ -1,11 +1,11 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "@/src/lib/db";
+import { db } from "@/lib/db";
 import { polar, checkout, portal } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
 import { trackUserSignup } from "./user-tracking";
 import { eq, sql } from "drizzle-orm";
-import { user as UserSchema, account as AccountSchema } from "@/src/lib/db/schema";
+import { user as UserSchema, account as AccountSchema } from "@/lib/db/schema";
 
 const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN as string,

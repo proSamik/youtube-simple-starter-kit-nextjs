@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/src/lib/db';
-import { todos } from '@/src/lib/db/schema';
+import { db } from '@/lib/db';
+import { todos } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 

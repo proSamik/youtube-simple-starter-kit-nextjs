@@ -15,7 +15,7 @@ import {
   CheckSquare,
   User
 } from 'lucide-react';
-import { Todo } from '@/src/lib/db/schema';
+import { Todo } from '@/lib/db/schema';
 
 export default function DashboardPage() {
   const { data: session } = useSession();
