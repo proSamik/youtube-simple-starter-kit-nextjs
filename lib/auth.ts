@@ -3,6 +3,9 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/src/lib/db";
 import { polar, checkout, portal } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
+import { trackUserSignup } from "./user-tracking";
+import { eq, sql } from "drizzle-orm";
+import { user as UserSchema, account as AccountSchema } from "@/src/lib/db/schema";
 
 const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN as string,
@@ -22,6 +25,48 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day (updates session every day)
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            // Track user signup event for all new users (email/password and social)
+            await trackUserSignup(user.email, user.name);
+          } catch (error) {
+            console.error("Error tracking user signup:", error);
+            // Don't throw error to prevent breaking user creation
+          }
+        },
+      },
+    },
+    account: {
+      create: {
+        after: async (account) => {
+          try {
+            // Track social signup for new accounts created via OAuth providers
+            if (account.providerId === "google") {
+              // Use raw SQL to check if this is a new social signup
+              const userResult = await db.select().from(UserSchema).where(eq(UserSchema.id, account.userId)).limit(1);
+              const user = userResult[0];
+              
+              if (user) {
+                // Check if this is the user's first account (indicating a new signup)
+                const accountCount = await db.select({ count: sql`count(*)` }).from(AccountSchema).where(eq(AccountSchema.userId, account.userId));
+                
+                // If this is the only account for this user, it's a new social signup
+                if (accountCount[0]?.count === 1) {
+                  await trackUserSignup(user.email, user.name);
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Error tracking social signup:", error);
+            // Don't throw error to prevent breaking account creation
+          }
+        },
+      },
+    },
   },
   plugins: [
     polar({
@@ -57,4 +102,3 @@ export const auth = betterAuth({
 });
 
 export type Session = typeof auth.$Infer.Session;
-export type User = typeof auth.$Infer.User;
