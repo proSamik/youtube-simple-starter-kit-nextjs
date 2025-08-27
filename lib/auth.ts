@@ -1,11 +1,13 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "@/lib/db";
-import { polar, checkout, portal } from "@polar-sh/better-auth";
+import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
 import { trackUserSignup } from "./user-tracking";
 import { eq, sql } from "drizzle-orm";
 import { user as UserSchema, account as AccountSchema } from "@/lib/db/schema";
+import { usePlunk } from "./useplunk";
+import { EmailService } from "./email-service";
 
 const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN as string,
@@ -95,7 +97,60 @@ export const auth = betterAuth({
           successUrl: "/premium/dashboard?checkout_success=true",
           authenticatedUsersOnly: true
         }),
-        portal()
+        portal(),
+        webhooks({
+          secret: process.env.POLAR_WEBHOOK_SECRET!,
+          onSubscriptionActive: async (payload: any) => {
+            try {
+              // Track subscription active event to Plunk
+              const customerEmail = payload.data?.customer?.email || payload.customer?.email;
+              const subscriptionId = payload.data?.subscription?.id || payload.subscription?.id;
+              const customerId = payload.data?.customer?.id || payload.customer?.id;
+              
+              if (!customerEmail) {
+                console.error('No customer email found in subscription active payload');
+                return;
+              }
+
+              await usePlunk.trackEvent({
+                event: 'user-subscription-active',
+                email: customerEmail,
+                subscribed: true,
+                data: {
+                  subscriptionId: subscriptionId || 'unknown',
+                  customerId: customerId || 'unknown',
+                  timestamp: new Date().toISOString(),
+                  eventType: 'subscription_active',
+                },
+              });
+              console.log(`Tracked subscription active event for: ${customerEmail}`);
+            } catch (error) {
+              console.error('Error tracking subscription active event:', error);
+            }
+          },
+          onSubscriptionCanceled: async (payload: any) => {
+            try {
+              // Send sad goodbye email with feedback request
+              const customerEmail = payload.data?.customer?.email || payload.customer?.email;
+              const customerName = payload.data?.customer?.name || payload.customer?.name;
+              const subscriptionId = payload.data?.subscription?.id || payload.subscription?.id;
+              
+              if (!customerEmail) {
+                console.error('No customer email found in subscription canceled payload');
+                return;
+              }
+
+              await EmailService.sendSubscriptionCanceledEmail({
+                name: customerName || customerEmail,
+                email: customerEmail,
+                subscriptionId: subscriptionId || 'unknown',
+              });
+              console.log(`Sent subscription canceled email to: ${customerEmail}`);
+            } catch (error) {
+              console.error('Error sending subscription canceled email:', error);
+            }
+          },
+        })
       ],
     })
   ]
