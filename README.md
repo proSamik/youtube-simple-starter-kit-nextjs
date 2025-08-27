@@ -1,4 +1,7 @@
-# YouTube Todo App
+# YouTube Starter Kit
+
+This Starter kit is created for 30 Day SaaS Crash Course on [YouTube](https://www.youtube.com/watch?v=BranVKjQ5FI&list=PLMwjMVAKOD5D75_XR1LBn3tc6qUZCnmid)
+
 
 A modern, full-stack Todo application built with Next.js 15, TypeScript, shadcn/ui, and Drizzle ORM. Features a beautiful blue and orange complementary color theme with complete CRUD operations.
 
