@@ -15,7 +15,7 @@ function runPostInstall() {
   console.log(`📊 NODE_ENV: ${nodeEnv}`);
   
   // Only run database operations in production
-  if (nodeEnv === 'production') {
+  if (nodeEnv === 'sandbox') {
     console.log('🌍 Production environment detected');
     console.log('📦 Running database migrations...');
     

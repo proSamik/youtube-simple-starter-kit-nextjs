@@ -8,7 +8,6 @@ import {
   CheckCircle, 
   Circle, 
   TrendingUp, 
-  Calendar,
   Zap,
   Star,
   Clock,
@@ -73,7 +72,7 @@ export default function DashboardPage() {
             Welcome back, {session?.user.name?.split(' ')[0]}! 👋
           </h1>
           <p className="text-slate-600 mt-2">
-            Here's what's happening with your tasks today
+            Here&apos;s what&apos;s happening with your tasks today
           </p>
         </div>
         <div className="text-right">

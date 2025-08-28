@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, authClient, signOut } from '@/lib/auth-client';
 import { Sidebar } from '@/components/ui/sidebar';
@@ -9,13 +9,22 @@ import { Button } from '@/components/ui/button';
 import { Pricing } from '@/components/ui/pricing';
 import { LogOut } from 'lucide-react';
 
+// Type definition for customer state
+interface CustomerState {
+  activeSubscriptions?: Array<{
+    productId: string;
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
 export default function PremiumLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { data: session, isPending } = useSession();
-  const [customerState, setCustomerState] = useState<any>(null);
+  const [customerState, setCustomerState] = useState<CustomerState | null>(null);
   const [loadingSubscription, setLoadingSubscription] = useState(true);
   const router = useRouter();
 
@@ -29,7 +38,7 @@ export default function PremiumLayout({
     });
   };
 
-  const fetchCustomerState = async () => {
+  const fetchCustomerState = useCallback(async () => {
     try {
       if (session) {
         const { data } = await authClient.customer.state();
@@ -44,7 +53,7 @@ export default function PremiumLayout({
     } finally {
       setLoadingSubscription(false);
     }
-  };
+  }, [session]);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -56,7 +65,7 @@ export default function PremiumLayout({
     if (session) {
       fetchCustomerState();
     }
-  }, [session]);
+  }, [session, fetchCustomerState]);
 
   if (isPending || loadingSubscription) {
     return (
@@ -74,7 +83,7 @@ export default function PremiumLayout({
   }
 
   // Check for active subscriptions using Polar's activeSubscriptions array
-  const hasActiveSubscription = customerState?.activeSubscriptions?.length > 0;
+  const hasActiveSubscription = (customerState?.activeSubscriptions?.length ?? 0) > 0;
   
   console.log('=== SUBSCRIPTION CHECK ===');
   console.log('Loading Subscription:', loadingSubscription);

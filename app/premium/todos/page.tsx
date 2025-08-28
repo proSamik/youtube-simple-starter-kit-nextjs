@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Edit2, Trash2, CheckCircle2, Circle, Target, Zap, Calendar, Star } from 'lucide-react';
 import { Todo } from '@/lib/db/schema';
-import { useSession } from '@/lib/auth-client';
+
 
 function PriorityBadge({ priority }: { priority: 'low' | 'medium' | 'high' }) {
   const config = {
@@ -246,7 +246,7 @@ export default function TodosPage() {
     description: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
   });
-  const { data: session } = useSession();
+
 
   const fetchTodos = async () => {
     try {

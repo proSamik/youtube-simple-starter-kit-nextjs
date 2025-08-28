@@ -13,7 +13,6 @@ import {
   LogOut, 
   Menu, 
   X,
-  Target,
   Crown,
   MessageCircle
 } from 'lucide-react';
