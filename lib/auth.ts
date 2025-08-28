@@ -9,6 +9,28 @@ import { user as UserSchema, account as AccountSchema } from "@/lib/db/schema";
 import { usePlunk } from "./useplunk";
 import { EmailService } from "./email-service";
 
+// Type for webhook payloads
+type WebhookPayload = {
+  data?: {
+    customer?: {
+      email?: string;
+      name?: string;
+      id?: string;
+    };
+    subscription?: {
+      id?: string;
+    };
+  };
+  customer?: {
+    email?: string;
+    name?: string;
+    id?: string;
+  };
+  subscription?: {
+    id?: string;
+  };
+};
+
 const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN as string,
   server: 'sandbox'
@@ -100,12 +122,13 @@ export const auth = betterAuth({
         portal(),
         webhooks({
           secret: process.env.POLAR_WEBHOOK_SECRET!,
-          onSubscriptionActive: async (payload: any) => {
+          onSubscriptionActive: async (payload: unknown) => {
             try {
               // Track subscription active event to Plunk
-              const customerEmail = payload.data?.customer?.email || payload.customer?.email;
-              const subscriptionId = payload.data?.subscription?.id || payload.subscription?.id;
-              const customerId = payload.data?.customer?.id || payload.customer?.id;
+              const payloadData = payload as WebhookPayload;
+              const customerEmail = payloadData.data?.customer?.email || payloadData.customer?.email;
+              const subscriptionId = payloadData.data?.subscription?.id || payloadData.subscription?.id;
+              const customerId = payloadData.data?.customer?.id || payloadData.customer?.id;
               
               if (!customerEmail) {
                 console.error('No customer email found in subscription active payload');
@@ -128,12 +151,13 @@ export const auth = betterAuth({
               console.error('Error tracking subscription active event:', error);
             }
           },
-          onSubscriptionCanceled: async (payload: any) => {
+          onSubscriptionCanceled: async (payload: unknown) => {
             try {
               // Send sad goodbye email with feedback request
-              const customerEmail = payload.data?.customer?.email || payload.customer?.email;
-              const customerName = payload.data?.customer?.name || payload.customer?.name;
-              const subscriptionId = payload.data?.subscription?.id || payload.subscription?.id;
+              const payloadData = payload as WebhookPayload;
+              const customerEmail = payloadData.data?.customer?.email || payloadData.customer?.email;
+              const customerName = payloadData.data?.customer?.name || payloadData.customer?.name;
+              const subscriptionId = payloadData.data?.subscription?.id || payloadData.subscription?.id;
               
               if (!customerEmail) {
                 console.error('No customer email found in subscription canceled payload');

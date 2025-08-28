@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,9 +19,18 @@ import {
   ExternalLink
 } from 'lucide-react';
 
+// Type definition for customer state
+interface CustomerState {
+  activeSubscriptions?: Array<{
+    productId: string;
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown;
+}
+
 export default function ProfilePage() {
   const { data: session, isPending } = useSession();
-  const [customerState, setCustomerState] = useState<any>(null);
+  const [customerState, setCustomerState] = useState<CustomerState | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -43,7 +52,7 @@ export default function ProfilePage() {
     }
   };
 
-  const fetchCustomerState = async () => {
+  const fetchCustomerState = useCallback(async () => {
     try {
       if (session) {
         const { data } = await authClient.customer.state();
@@ -54,7 +63,7 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -66,7 +75,7 @@ export default function ProfilePage() {
     if (session) {
       fetchCustomerState();
     }
-  }, [session]);
+  }, [session, fetchCustomerState]);
 
   if (isPending || loading) {
     return (
@@ -83,7 +92,7 @@ export default function ProfilePage() {
     return null;
   }
 
-  const hasActiveSubscription = customerState?.activeSubscriptions?.length > 0 || false;
+  const hasActiveSubscription = (customerState?.activeSubscriptions?.length ?? 0) > 0;
   const currentSubscription = customerState?.activeSubscriptions?.[0]; // Get the first active subscription
   
   // Get product name - we'll need to match productId with our known products

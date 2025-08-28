@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, timestamp, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, boolean, timestamp } from 'drizzle-orm/pg-core';
 
 /**
  * BetterAuth User table schema
