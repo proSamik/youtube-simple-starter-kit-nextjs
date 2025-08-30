@@ -5,9 +5,17 @@ import { polar, checkout, portal, webhooks } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
 import { trackUserSignup } from "./user-tracking";
 import { eq, sql } from "drizzle-orm";
-import { user as UserSchema, account as AccountSchema } from "@/lib/db/schema";
+import { user as UserSchema, 
+  account as AccountSchema, 
+  session as SessionSchema,
+  verification as VerificationSchema,
+  oauthApplication,
+  oauthAccessToken,
+  oauthConsent
+} from "@/lib/db/schema";
 import { usePlunk } from "./useplunk";
 import { EmailService } from "./email-service";
+import { mcp } from "better-auth/plugins";   
 
 // Type for webhook payloads
 type WebhookPayload = {
@@ -39,6 +47,15 @@ const polarClient = new Polar({
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
+    schema: {
+      user: UserSchema,
+      account: AccountSchema,
+      session: SessionSchema,
+      verification: VerificationSchema,
+      oauthApplication,
+      oauthAccessToken,
+      oauthConsent
+    }
   }),
   socialProviders: {
     google: {
@@ -176,6 +193,9 @@ export const auth = betterAuth({
           },
         })
       ],
+    }),
+    mcp({
+      loginPage: "/sign-in" 
     })
   ]
 });
