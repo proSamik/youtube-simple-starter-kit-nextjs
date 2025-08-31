@@ -112,6 +112,43 @@ export const todos = pgTable('todos', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+/**
+ * Chat Projects - organize conversations by topic/purpose
+ */
+export const chatProjects = pgTable('chat_projects', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * Chat Threads - individual conversations within projects
+ */
+export const chatThreads = pgTable('chat_threads', {
+  id: text('id').primaryKey(),
+  title: text('title'),
+  projectId: text('project_id').references(() => chatProjects.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * Chat Messages - individual messages in threads
+ */
+export const chatMessages = pgTable('chat_messages', {
+  id: text('id').primaryKey(),
+  threadId: text('thread_id').notNull().references(() => chatThreads.id, { onDelete: 'cascade' }),
+  role: text('role', { enum: ['user', 'assistant'] }).notNull(),
+  content: text('content').notNull(),
+  attachments: text('attachments'),
+  metadata: text('metadata'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;
 export type Session = typeof session.$inferSelect;
@@ -122,6 +159,12 @@ export type Verification = typeof verification.$inferSelect;
 export type NewVerification = typeof verification.$inferInsert;
 export type Todo = typeof todos.$inferSelect;
 export type NewTodo = typeof todos.$inferInsert;
+export type ChatProject = typeof chatProjects.$inferSelect;
+export type NewChatProject = typeof chatProjects.$inferInsert;
+export type ChatThread = typeof chatThreads.$inferSelect;
+export type NewChatThread = typeof chatThreads.$inferInsert;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type NewChatMessage = typeof chatMessages.$inferInsert;
 export type oauthApplicationEntity = typeof oauthApplication.$inferSelect;
 export type oauthAccessTokenEntity = typeof oauthAccessToken.$inferSelect;
 export type oauthConsentEntity = typeof oauthConsent.$inferSelect;
